@@ -6,59 +6,45 @@ on:
 
 jobs:
   build:
-    name: Build WebGL
+    name: Build my project ✨
     runs-on: ubuntu-latest
-
     steps:
+      # Checkout
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-      - name: Cache Library
-        uses: actions/cache@v3
+      # Cache
+      - uses: actions/cache@v3
         with:
           path: Library
-          key: Library-${{ runner.os }}-${{ hashFiles('**/*.cs') }}
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ runner.os }}-
+            Library-
 
-      - name: Unity - Activate License
-        uses: game-ci/unity-activate@v2
-        with:
-          unityVersion: 6.0.0f1
+      # Test
+      - name: Run tests
+        uses: game-ci/unity-test-runner@v4
         env:
+          #UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_ACTIVATE_DEBUG: true  # Optional for debug
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Unity - Build WebGL
-        uses: game-ci/unity-builder@v2
+      # Build
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        env:
+          #UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: WebGL
-          unityVersion: 6.0.0f1
-        env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
-      - name: Upload WebGL Build
-        uses: actions/upload-artifact@v4
+      # Output
+      - uses: actions/upload-artifact@v3
         with:
-          name: WebGLBuild
-          path: build/WebGL
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download WebGL Build
-        uses: actions/download-artifact@v4
-        with:
-          name: WebGLBuild
-          path: webgl
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./webgl
+          name: Build
+          path: build
