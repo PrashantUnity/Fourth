@@ -24,17 +24,17 @@ jobs:
       - name: Unity - Activate License
         uses: game-ci/unity-activate@v2
         with:
-          unityVersion: 6000.0.42f1
+          unityVersion: 6.0.0f1
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_ACTIVATE_DEBUG: true  # Optional: useful for debugging
+          UNITY_ACTIVATE_DEBUG: true  # Optional for debug
 
       - name: Unity - Build WebGL
         uses: game-ci/unity-builder@v2
         with:
           targetPlatform: WebGL
-          unityVersion: 6000.0.42f1
+          unityVersion: 6.0.0f1
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
