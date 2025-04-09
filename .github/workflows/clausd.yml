@@ -1,0 +1,73 @@
+name: Unity WebGL CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      - name: Generate Unity license activation file
+        id: getLicenseFile
+        run: |
+          mkdir -p /tmp/Unity
+          echo "${{ secrets.UNITY_LICENSE }}" > /tmp/Unity/license.ulf
+          echo "licenseFile=/tmp/Unity/license.ulf" >> $GITHUB_OUTPUT
+
+      - name: Unity - Build WebGL
+        uses: game-ci/unity-builder@v3
+        env:
+          UNITY_LICENSE_FILE: ${{ steps.getLicenseFile.outputs.licenseFile }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          unityVersion: 2020.3.30f1
+          buildName: WebGL Build
+          buildMethod: ""
+          customParameters: "-batchmode -nographics"
+
+      - name: Upload WebGL Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebGLBuild
+          path: build/WebGL
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    # Only deploy when pushing to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Download WebGL Build
+        uses: actions/download-artifact@v4
+        with:
+          name: WebGLBuild
+          path: webgl-build
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: webgl-build
+          branch: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          clean: true
