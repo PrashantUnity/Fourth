@@ -15,9 +15,8 @@ jobs:
 
       - name: Decode and install Unity license
         run: |
-          echo "${{ secrets.UNITY_LICENSE }}" | base64 -d > Unity_v2022.x.ulf
           mkdir -p ~/.local/share/unity3d/Unity/License
-          mv Unity_v2022.x.ulf ~/.local/share/unity3d/Unity/License/
+          echo "${{ secrets.UNITY_LICENSE }}" > ~/.local/share/unity3d/Unity/License/Unity_v2022.x.ulf
 
       - name: Cache Library
         uses: actions/cache@v3
