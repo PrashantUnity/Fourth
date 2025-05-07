@@ -1,59 +1,18 @@
-name: Unity WebGL CI/CD
-
+name: Acquire activation file
 on:
-  push:
-    branches: [main]
-
+  workflow_dispatch: {}
 jobs:
-  build:
-    name: Build WebGL
+  activation:
+    name: Request manual activation file 🔑
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Decode and install Unity license
-        run: |
-          mkdir -p ~/.local/share/unity3d/Unity/License
-          echo "${{ secrets.UNITY_LICENSE }}" > ~/.local/share/unity3d/Unity/License/Unity_v2022.x.ulf
-
-      - name: Cache Library
-        uses: actions/cache@v3
+      # Request manual activation file
+      - name: Request manual activation file
+        id: getManualLicenseFile
+        uses: game-ci/unity-request-activation-file@v2
+      # Upload artifact (Unity_v20XX.X.XXXX.alf)
+      - name: Expose as artifact
+        uses: actions/upload-artifact@v2
         with:
-          path: Library
-          key: Library-${{ runner.os }}-${{ hashFiles('**/*.cs') }}
-          restore-keys: |
-            Library-${{ runner.os }}-
-
-      - name: Build WebGL
-        uses: game-ci/unity-builder@v2
-        with:
-          targetPlatform: WebGL
-          unityVersion: 2022.3.5f1
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}  # still required to satisfy the builder
-
-      - name: Upload WebGL Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebGLBuild
-          path: build/WebGL
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download WebGL Build
-        uses: actions/download-artifact@v4
-        with:
-          name: WebGLBuild
-          path: webgl
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./webgl
+          name: ${{ steps.getManualLicenseFile.outputs.filePath }}
+          path: ${{ steps.getManualLicenseFile.outputs.filePath }}
